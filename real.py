@@ -1,0 +1,65 @@
+import requests
+from bs4 import BeautifulSoup
+import mysql.connector
+
+connection = mysql.connector.connect(
+    host = 'localhost', 
+    user = 'ohgiraffers',
+    password = 'ohgiraffers',
+    database = 'faqdb'
+)
+
+cursor = connection.cursor()
+
+# 데이터를 저장할 리스트
+data_list = []
+
+# q_a 범위 설정
+for q_a in [531, 530, 529, 528, 236, 235, 233, 231, 230, 227, 143, 142, 83, 82, 79, 78]:
+    url = f"https://www.sisul.or.kr/open_content/traffic/bbs/bbsMsgDetail.do?msg_seq={q_a}&keyfield=title&listsz=10&cate1=04&bcd=faq"
+    response = requests.get(url)
+    bs = BeautifulSoup(response.text, 'html.parser')
+    
+    
+    s = bs.select('tbody td')[3].text
+    q = bs.select_one('thead tr').text
+    a = bs.select('td.view_contents p')
+    num = len(a)
+    a_content = ''
+    for _ in range(num):
+        k = a[_].text
+        a_content += k
+        
+    data_list.append((q, a_content, s))
+    print(f"msg_seq {q_a} 완료")
+
+
+
+for q_a in [120, 119, 118, 117, 116, 115, 114, 113, 112, 109, 108]:
+    url = f'https://www.sisul.or.kr/open_content/traffic/bbs/bbsMsgDetail.do?msg_seq={q_a}&keyfield=title&listsz=10&cate1=07&bcd=faq'
+    response = requests.get(url)
+    bs = BeautifulSoup(response.text, 'html.parser')
+    
+    
+    s = bs.select('tbody td')[3].text
+    q = bs.select_one('thead tr').text
+    a = bs.select('td.view_contents p')
+    num = len(a)
+    a_content = ''
+    for _ in range(num):
+        k = a[_].text
+        a_content += k
+        
+    data_list.append((q, a_content, s))
+    print(f"msg_seq {q_a} 완료")
+
+print(data_list)
+
+for data in data_list:
+    sql = "INSERT INTO tbl_faq (faq_title, faq_contents, faq_section) VALUES (%s, %s, %s)"
+    print(data)
+    cursor.execute(sql,data)
+
+connection.commit()
+cursor.close()
+connection.close()
